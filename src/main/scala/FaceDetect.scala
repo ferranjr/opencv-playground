@@ -27,40 +27,14 @@ object FaceDetect extends App {
 
 
 // load classifier
-  val faceDetector = new CascadeClassifier("data/haarcascade_frontalface_alt.xml")
-  val eyesDetector = new CascadeClassifier("data/haarcascade_eye.xml")
-  val noseDetector = new CascadeClassifier("data/haarcascade_mcs_nose.xml")
+  List("haarcascade_frontalface_alt.xml", "haarcascade_eye.xml", "haarcascade_mcs_nose.xml")
+    .foreach{ filename =>
+      DetectionTools
+        .detectObjectWithHaarCascade(
+          s"data/$filename", equalizedMat, imageRaw
+        )
+    }
 
-  val faceDetections = new RectVector()
-  val eyesDetections = new RectVector()
-  val noseDetections = new RectVector()
-
-  faceDetector.detectMultiScale(equalizedMat, faceDetections)
-
-  for {
-    i <- 0 until faceDetections.size().toInt
-    rect = faceDetections.get(i)
-  }{
-    rectangle(imageRaw, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 0, 0, 255))
-  }
-
-  eyesDetector.detectMultiScale(equalizedMat, eyesDetections)
-
-  for {
-    i <- 0 until eyesDetections.size().toInt
-    rect = eyesDetections.get(i)
-  }{
-    rectangle(imageRaw, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 0, 255, 0))
-  }
-
-  eyesDetector.detectMultiScale(equalizedMat, noseDetections)
-
-  for {
-    i <- 0 until noseDetections.size().toInt
-    rect = noseDetections.get(i)
-  }{
-    rectangle(imageRaw, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 255, 255, 0))
-  }
 
   // ADDING OVERLAY
 
@@ -97,8 +71,8 @@ object FaceDetect extends App {
 
 object DetectionTools {
 
-  val j2dconverter = new Java2DFrameConverter
-  val opencvConverter = new OpenCVFrameConverter.ToMat()
+  private val j2dconverter    = new Java2DFrameConverter
+  private val opencvConverter = new OpenCVFrameConverter.ToMat()
 
   def loadMatImage(strBase64: String):Mat = {
     //    val bytes = pic.picture.toByteArray
@@ -106,6 +80,26 @@ object DetectionTools {
     val img: BufferedImage =  ImageIO.read(new ByteArrayInputStream(bytes))
 
     opencvConverter.convert(j2dconverter.convert(img))
+  }
+
+
+  def detectObjectWithHaarCascade(
+                                   cascadeClassifierFileName: String,
+                                   equalizedMat: Mat,
+                                   imageRaw: Mat
+                                 ):Unit = {
+
+    val detector = new CascadeClassifier(cascadeClassifierFileName)
+    val detections = new RectVector()
+
+    detector.detectMultiScale(equalizedMat, detections)
+
+    for{
+      i <- 0 until detections.size().toInt
+      rect = detections.get(i)
+    }{
+      rectangle(imageRaw, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 0, 0, 255))
+    }
   }
 
 }
